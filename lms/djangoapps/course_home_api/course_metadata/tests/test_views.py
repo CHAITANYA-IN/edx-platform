@@ -9,6 +9,7 @@ from django.db import transaction
 from django.test.utils import override_settings
 from django.urls import reverse
 from edx_toggles.toggles.testutils import override_waffle_flag
+from openedx_filters.learning.filters import CoursewareAccessChecksRequested
 
 from common.djangoapps.course_modes.models import CourseMode
 from common.djangoapps.student.models import CourseEnrollment
@@ -228,7 +229,18 @@ class CourseHomeMetadataTests(BaseCourseHomeTests):
             self.update_masquerade(role=masquerade_role)
 
         consent_url = 'dump/consent/url' if dsc_required else None
-        with patch('openedx.features.enterprise_support.api.get_enterprise_consent_url', return_value=consent_url):
+        if dsc_required:
+            mock_side_effect = CoursewareAccessChecksRequested.PreventCoursewareAccess(
+                error_code='data_sharing_access_required',
+                developer_message=consent_url,
+                user_message='You must give Data Sharing Consent for the course',
+            )
+            with patch(
+                'openedx_filters.learning.filters.CoursewareAccessChecksRequested.run_filter',
+                side_effect=mock_side_effect,
+            ):
+                response = self.client.get(self.url)
+        else:
             response = self.client.get(self.url)
 
         self._assert_course_access_response(response, expect_course_access, error_code)
