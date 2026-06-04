@@ -360,6 +360,7 @@ class CoursewareIndexTestCase(BaseViewsTestCase):
 
 
 @ddt.ddt
+@patch.dict(settings.FEATURES, {'ENABLE_COURSE_HOME_REDIRECT': False})
 class ViewsTestCase(BaseViewsTestCase):
     """
     Tests for views.py methods.
@@ -996,6 +997,7 @@ class TestProgressDueDate(BaseDueDateTests):
         return self.client.get(reverse('progress', args=[str(course.id)]))
 
 
+@patch.dict(settings.FEATURES, {'ENABLE_COURSE_HOME_REDIRECT': False})
 class StartDateTests(ModuleStoreTestCase):
     """
     Test that start dates are properly localized and displayed on the student
@@ -3330,6 +3332,7 @@ class TestCoursewareMFENavigationSidebarTogglesAPI(SharedModuleStoreTestCase):
 
 
 @ddt.ddt
+@patch.dict(settings.FEATURES, {'ENABLE_COURSE_HOME_REDIRECT': False})
 class CourseAboutViewTests(ModuleStoreTestCase):
     """
     Tests for the CourseAboutView.

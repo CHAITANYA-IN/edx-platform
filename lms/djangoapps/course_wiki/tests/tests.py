@@ -8,6 +8,7 @@ from unittest.mock import patch
 from django.urls import reverse
 
 from lms.djangoapps.courseware.tests.tests import LoginEnrollmentTestCase
+from openedx.features.course_experience import course_home_url
 from openedx.features.course_experience.url_helpers import make_learning_mfe_courseware_url
 from openedx.features.enterprise_support.tests.mixins.enterprise import EnterpriseTestConsentRequired
 from xmodule.modulestore.tests.django_utils import (
@@ -135,7 +136,7 @@ class WikiRedirectTestCase(EnterpriseTestConsentRequired, LoginEnrollmentTestCas
     def test_wiki_not_accessible_when_not_enrolled(self):
         """
         Test that going from a course page to a wiki page when not enrolled
-        redirects a user to the course about page
+        redirects a user to the course home page
         """
 
         self.login(self.instructor, self.password)
@@ -151,10 +152,10 @@ class WikiRedirectTestCase(EnterpriseTestConsentRequired, LoginEnrollmentTestCas
         resp = self.client.get(course_wiki_page, follow=False, HTTP_REFERER=referer)
         assert resp.status_code == 302
 
-        # and end up at the course about page
+        # and end up at the course home page
         resp = self.client.get(course_wiki_page, follow=True, HTTP_REFERER=referer)
         target_url, __ = resp.redirect_chain[-1]
-        assert target_url.endswith(reverse('about_course', args=[str(self.toy.id)]))
+        assert target_url == course_home_url(self.toy.id)
 
     @patch.dict("django.conf.settings.FEATURES", {'ALLOW_WIKI_ROOT_ACCESS': True})
     def test_redirect_when_not_logged_in(self):

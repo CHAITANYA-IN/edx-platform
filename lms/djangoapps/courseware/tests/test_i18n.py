@@ -210,7 +210,7 @@ class I18nLangPrefTests(BaseI18nTestCase):
 
         self.assert_tag_has_attr(response.content.decode('utf-8'), "html", "lang", 'eo')
         # Hitting another page should keep the dark language set.
-        response = self.client.get(reverse('courses'))
+        response = self.client.get(reverse('dashboard'))
         self.assert_tag_has_attr(response.content.decode('utf-8'), "html", "lang", "eo")
 
         # Clearing language must set language back to preference language

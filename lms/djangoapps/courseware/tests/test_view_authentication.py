@@ -23,6 +23,7 @@ from common.djangoapps.student.tests.factories import (
 from lms.djangoapps.courseware.access import has_access
 from lms.djangoapps.courseware.tests.helpers import CourseAccessTestMixin, LoginEnrollmentTestCase
 from lms.djangoapps.instructor.toggles import LEGACY_INSTRUCTOR_DASHBOARD
+from openedx.features.course_experience import course_home_url
 from openedx.features.enterprise_support.tests.mixins.enterprise import EnterpriseTestConsentRequired
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
@@ -58,10 +59,13 @@ class TestViewAuth(EnterpriseTestConsentRequired, ModuleStoreTestCase, LoginEnro
 
         `course` is an instance of CourseBlock.
         """
-        urls = [reverse('about_course', kwargs={'course_id': str(course.id)}),
-                reverse('courses')]
-        for url in urls:
-            self.assert_request_status_code(200, url)
+        about_url = reverse('about_course', kwargs={'course_id': str(course.id)})
+        response = self.client.get(about_url)
+        assert response.status_code == 302
+        assert response['Location'] == course_home_url(course.id)
+
+        # courses view redirects to / when no marketing URL is configured
+        self.assert_request_status_code(302, reverse('courses'))
 
     def _check_non_staff_dark(self, course):
         """
@@ -94,9 +98,14 @@ class TestViewAuth(EnterpriseTestConsentRequired, ModuleStoreTestCase, LoginEnro
             for index in range(len(course.textbooks))
         ])
         for url in urls:
-            # Instructor dashboard returns 302 (MFE redirect) by default
             if 'instructor' in url:
+                # Instructor dashboard returns 302 (MFE redirect) by default
                 self.assert_request_status_code(302, url)
+            elif 'about' in url:
+                # about_course redirects enrolled users to course home MFE
+                response = self.client.get(url)
+                assert response.status_code == 302
+                assert response['Location'] == course_home_url(course.id)
             else:
                 self.assert_request_status_code(200, url)
 
@@ -127,8 +136,14 @@ class TestViewAuth(EnterpriseTestConsentRequired, ModuleStoreTestCase, LoginEnro
             for index in range(len(course.textbooks))
         ])
         for url in urls:
-            # With legacy flag enabled, all URLs return 200 (instructor dashboard skips MFE redirect)
-            self.assert_request_status_code(200, url)
+            if 'about' in url:
+                # about_course redirects enrolled users to course home MFE
+                response = self.client.get(url)
+                assert response.status_code == 302
+                assert response['Location'] == course_home_url(course.id)
+            else:
+                # With legacy flag enabled, all other URLs return 200
+                self.assert_request_status_code(200, url)
 
         # The student progress tab behavior is affected by legacy flag in normal scenarios
         url = reverse(
@@ -153,8 +168,14 @@ class TestViewAuth(EnterpriseTestConsentRequired, ModuleStoreTestCase, LoginEnro
             for index in range(len(course.textbooks))
         ])
         for url in urls:
-            # With legacy flag enabled, all URLs return 200 (instructor dashboard skips MFE redirect)
-            self.assert_request_status_code(200, url)
+            if 'about' in url:
+                # about_course redirects enrolled users to course home MFE
+                response = self.client.get(url)
+                assert response.status_code == 302
+                assert response['Location'] == course_home_url(course.id)
+            else:
+                # With legacy flag enabled, all other URLs return 200
+                self.assert_request_status_code(200, url)
 
         # In dark launch scenarios, student progress URL still returns 302 even with legacy flag
         # because course access restrictions take precedence

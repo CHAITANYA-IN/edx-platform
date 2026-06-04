@@ -1,6 +1,9 @@
 """
 Test that various filters are fired for courseware views.
 """
+from unittest.mock import patch
+
+from django.conf import settings
 from django.http import HttpResponse
 from django.test import override_settings
 from django.urls import reverse
@@ -104,6 +107,7 @@ class TestCourseAboutRender(PipelineStep):
 
 
 @skip_unless_lms
+@patch.dict(settings.FEATURES, {'ENABLE_COURSE_HOME_REDIRECT': False})
 class CourseAboutFiltersTest(ModuleStoreTestCase):
     """
     Tests for the Open edX Filters associated with the course about rendering process.

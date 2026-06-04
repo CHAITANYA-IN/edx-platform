@@ -23,6 +23,7 @@ from ..test_utils import restrict_course
 
 @ddt.ddt
 @skip_unless_lms
+@patch.dict(settings.FEATURES, {'ENABLE_COURSE_HOME_REDIRECT': False})
 class EmbargoMiddlewareAccessTests(UrlResetMixin, ModuleStoreTestCase):
     """Tests of embargo middleware country access rules.
 
