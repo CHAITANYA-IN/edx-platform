@@ -294,39 +294,6 @@ def user_groups(user):
     return group_names
 
 
-@ensure_csrf_cookie
-@cache_if_anonymous()
-def courses(request):
-    """
-    Render "find courses" page.  The course selection work is done in courseware.courses.
-    """
-    courses_list = []
-    course_discovery_meanings = getattr(settings, 'COURSE_DISCOVERY_MEANINGS', {})
-    set_default_filter = ENABLE_COURSE_DISCOVERY_DEFAULT_LANGUAGE_FILTER.is_enabled()
-    if not settings.FEATURES.get('ENABLE_COURSE_DISCOVERY'):
-        courses_list = get_courses(
-            request.user,
-            filter_={"catalog_visibility": CATALOG_VISIBILITY_CATALOG_AND_ABOUT},
-        )
-
-        if configuration_helpers.get_value("ENABLE_COURSE_SORTING_BY_START_DATE",
-                                           settings.FEATURES["ENABLE_COURSE_SORTING_BY_START_DATE"]):
-            courses_list = sort_by_start_date(courses_list)
-        else:
-            courses_list = sort_by_announcement(courses_list)
-
-    # Add marketable programs to the context.
-    programs_list = get_programs_with_type(request.site, include_hidden=False)
-
-    return render_to_response(
-        "courseware/courses.html",
-        {
-            'courses': courses_list,
-            'course_discovery_meanings': course_discovery_meanings,
-            'set_default_filter': set_default_filter,
-            'programs_list': programs_list,
-        }
-    )
 
 
 class PerUserVideoMetadataThrottle(UserRateThrottle):
@@ -787,6 +754,39 @@ class EnrollStaffView(View):
 
         # In any other case redirect to the course about page.
         return redirect(reverse('about_course', args=[str(course_key)]))
+
+
+def courses(request):
+    """
+    Render "find courses" page.  The course selection work is done in courseware.courses.
+    """
+    courses_list = []
+    course_discovery_meanings = getattr(settings, 'COURSE_DISCOVERY_MEANINGS', {})
+    set_default_filter = ENABLE_COURSE_DISCOVERY_DEFAULT_LANGUAGE_FILTER.is_enabled()
+    if not settings.FEATURES.get('ENABLE_COURSE_DISCOVERY'):
+        courses_list = get_courses(
+            request.user,
+            filter_={"catalog_visibility": CATALOG_VISIBILITY_CATALOG_AND_ABOUT},
+        )
+
+        if configuration_helpers.get_value("ENABLE_COURSE_SORTING_BY_START_DATE",
+                                           settings.FEATURES["ENABLE_COURSE_SORTING_BY_START_DATE"]):
+            courses_list = sort_by_start_date(courses_list)
+        else:
+            courses_list = sort_by_announcement(courses_list)
+
+    # Add marketable programs to the context.
+    programs_list = get_programs_with_type(request.site, include_hidden=False)
+
+    return render_to_response(
+        "courseware/courses.html",
+        {
+            'courses': courses_list,
+            'course_discovery_meanings': course_discovery_meanings,
+            'set_default_filter': set_default_filter,
+            'programs_list': programs_list,
+        }
+    )
 
 
 @ensure_csrf_cookie

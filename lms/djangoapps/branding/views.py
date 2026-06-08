@@ -16,6 +16,7 @@ from django.views.decorators.cache import cache_control
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 import lms.djangoapps.branding.api as branding_api
+import lms.djangoapps.courseware.views.views as courseware_views
 from common.djangoapps.edxmako.shortcuts import marketing_link, render_to_response
 from common.djangoapps.student import views as student_views
 from common.djangoapps.util.cache import cache_if_anonymous
@@ -69,10 +70,10 @@ def index(request):
         return student_views.index(request, user=request.user)
     except NoReverseMatch:
         log.error(
-            f'https is not a registered namespace Request from {domain}',
-            f'request_site= {request.site.__dict__}',
-            f'Auth Status= {request.user.is_authenticated}',
-            f'Request Meta= {request.META}'
+            f'NoReverseMatch on index view for domain {domain}; '
+            f'request_site={getattr(request, "site", None)}; '
+            f'Auth Status={request.user.is_authenticated}; '
+            f'Request Meta={request.META}'
         )
         raise
 
@@ -81,9 +82,8 @@ def index(request):
 @cache_if_anonymous()
 def courses(request):
     """
-    Render the "find courses" page. If the marketing site is enabled, redirect
-    to that. Otherwise, if subdomain branding is on, this is the university
-    profile page. Otherwise, it's the edX courseware.views.views.courses page
+    Serve the "find courses" page. Redirects to the catalog MFE or the marketing
+    site COURSES URL if configured; falls back to rendering the local courses page.
     """
     if use_catalog_mfe():
         return redirect(f'{settings.CATALOG_MICROFRONTEND_URL}/courses', permanent=True)
@@ -91,7 +91,7 @@ def courses(request):
     courses_url = marketing_link('COURSES')
     if courses_url != '#':
         return redirect(courses_url, permanent=True)
-    return redirect('/')
+    return courseware_views.courses(request)
 
 
 def _footer_static_url(request, name):

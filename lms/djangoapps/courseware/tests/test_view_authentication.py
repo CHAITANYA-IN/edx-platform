@@ -64,8 +64,9 @@ class TestViewAuth(EnterpriseTestConsentRequired, ModuleStoreTestCase, LoginEnro
         assert response.status_code == 302
         assert response['Location'] == course_home_url(course.id)
 
-        # courses view redirects to / when no marketing URL is configured
-        self.assert_request_status_code(302, reverse('courses'))
+        # courses view falls back to rendering the local course list when
+        # neither the catalog MFE nor a marketing COURSES URL is configured
+        self.assert_request_status_code(200, reverse('courses'))
 
     def _check_non_staff_dark(self, course):
         """
