@@ -474,10 +474,6 @@ if ENABLE_ENTERPRISE_INTEGRATION:
 
 #####################################################################
 
-# django-session-cookie middleware
-DCS_SESSION_COOKIE_SAMESITE = 'Lax'
-DCS_SESSION_COOKIE_SAMESITE_FORCE_ALL = True
-
 ########################## THEMING  #######################
 # If you want to enable theming in devstack, uncomment this section and add any relevant
 # theme directories to COMPREHENSIVE_THEME_DIRS
