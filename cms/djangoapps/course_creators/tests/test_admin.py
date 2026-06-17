@@ -9,6 +9,7 @@ from django.contrib.admin.sites import AdminSite
 from django.core import mail
 from django.http import HttpRequest
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from cms.djangoapps.course_creators.admin import CourseCreatorAdmin
 from cms.djangoapps.course_creators.models import CourseCreator
@@ -52,10 +53,10 @@ class CourseCreatorAdminTest(TestCase):
 
         self.studio_request_email = 'mark@marky.mark'
         self.enable_creator_group_patch = {
-            "ENABLE_CREATOR_GROUP": True,
-            "STUDIO_REQUEST_EMAIL": self.studio_request_email
+            "STUDIO_REQUEST_EMAIL": self.studio_request_email,
         }
 
+    @override_settings(ENABLE_CREATOR_GROUP=True)
     @mock.patch(
         'cms.djangoapps.course_creators.admin.render_to_string',
         mock.Mock(side_effect=mock_render_to_string, autospec=True)
@@ -103,6 +104,7 @@ class CourseCreatorAdminTest(TestCase):
 
             change_state_and_verify_email(CourseCreator.DENIED, False)
 
+    @override_settings(ENABLE_CREATOR_GROUP=True)
     @mock.patch(
         'cms.djangoapps.course_creators.admin.render_to_string',
         mock.Mock(side_effect=mock_render_to_string, autospec=True)
