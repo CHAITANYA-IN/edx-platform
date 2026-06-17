@@ -25,8 +25,37 @@ class FeaturesProxy(MutableMapping):
         """Store the namespace (as a dict)"""
         self.ns = namespace or {}
 
+    _MISSING = object()
+
+    def _resolve(self, key):
+        """Return key's value if it's been overridden via @override_settings, else self._MISSING.
+
+        We deliberately walk only the UserSettingsHolder chain (the layers that
+        @override_settings pushes onto django.conf.settings._wrapped) rather
+        than reading django.conf.settings.X directly. Django's bottom Settings
+        layer is a *snapshot* taken at init time, so it doesn't reflect runtime
+        mutations of the settings module's globals (which is what
+        proxy.ns mutations and legacy patch.dict(settings.FEATURES, ...) do).
+        Walking only the explicit override layers lets the new
+        @override_settings(X=Y) path work while leaving the legacy patch.dict
+        path untouched.
+        """
+        from django.conf import settings as django_settings
+        wrapped = django_settings._wrapped  # pylint: disable=protected-access
+        # UserSettingsHolder has a `default_settings` attribute and stores
+        # explicit overrides in its own __dict__; the bottom Settings has no
+        # default_settings, so the loop terminates there.
+        while hasattr(wrapped, 'default_settings'):
+            if key in wrapped.__dict__:
+                return wrapped.__dict__[key]
+            wrapped = wrapped.default_settings
+        return self._MISSING
+
     def __getitem__(self, key):
-        """Retrieve a feature flag by key"""
+        """Retrieve a feature flag by key, preferring @override_settings overrides."""
+        value = self._resolve(key)
+        if value is not self._MISSING:
+            return value
         return self.ns[key]
 
     # Frames to skip when walking the stack for the [caller: ...] suffix.
@@ -68,14 +97,17 @@ class FeaturesProxy(MutableMapping):
         return len(self.ns)
 
     def __contains__(self, key):
-        return key in self.ns
+        return self._resolve(key) is not self._MISSING or key in self.ns
 
     def clear(self):
         """Remove all feature flags from the namespace."""
         self.ns.clear()
 
     def get(self, key, default=None):
-        """Standard dict-style get with default"""
+        """Standard dict-style get with default; prefers @override_settings overrides."""
+        value = self._resolve(key)
+        if value is not self._MISSING:
+            return value
         return self.ns.get(key, default)
 
     def update(self, other=(), /, **kwds):
