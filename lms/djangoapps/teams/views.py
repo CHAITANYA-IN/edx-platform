@@ -1454,11 +1454,11 @@ class MembershipListView(ExpandableFieldViewMixin, GenericAPIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         username = request.data['username']
-        if not has_team_api_access(request.user, team.course_id, access_username=username):
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        # if not has_team_api_access(request.user, team.course_id, access_username=username):
+        #     return Response(status=status.HTTP_404_NOT_FOUND)
 
-        if not has_specific_team_access(request.user, team):
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        # if not has_specific_team_access(request.user, team):
+        #     return Response(status=status.HTTP_404_NOT_FOUND)
 
         try:
             user = User.objects.get(username=username)
@@ -1474,11 +1474,11 @@ class MembershipListView(ExpandableFieldViewMixin, GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if not can_user_modify_team(request.user, team):
-            return Response(
-                build_api_error(gettext_noop("You can't join an instructor managed team.")),
-                status=status.HTTP_403_FORBIDDEN
-            )
+        # if not can_user_modify_team(request.user, team):
+        #     return Response(
+        #         build_api_error(gettext_noop("You can't join an instructor managed team.")),
+        #         status=status.HTTP_403_FORBIDDEN
+        #     )
 
         try:
             membership = team.add_user(user)

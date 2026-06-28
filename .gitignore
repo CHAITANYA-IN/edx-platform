@@ -153,3 +153,6 @@ pii_report
 
 # Pyenv Python version file
 .python-version
+
+# Access Control
+lms/djangoapps/access_control/keys/*
