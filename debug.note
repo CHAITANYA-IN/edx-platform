@@ -1,0 +1,11 @@
+tutor dev stop
+tutor dev start -d
+
+docker compose \
+  -f /home/chaitanya/.local/share/tutor/env/local/docker-compose.yml \
+  -f /home/chaitanya/.local/share/tutor/env/dev/docker-compose.yml \
+  -f /home/chaitanya/Desktop/openedx-dev/edx-platform/tools/debug/lms-debug.override.yml \
+  --project-name tutor_dev \
+  up -d --force-recreate lms
+
+# VSCODE: Attach Open edX LMS (Tutor)

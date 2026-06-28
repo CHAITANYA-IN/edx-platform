@@ -71,6 +71,13 @@ from openedx.core.lib.features_setting_proxy import FeaturesProxy
 # A proxy for feature flags stored in the settings namespace
 FEATURES = FeaturesProxy(globals())
 
+# Demo wiring for the external access-control integration. This enables the
+# middleware/app patch path and points LMS at the host-side Go server from
+# inside the Tutor Docker network.
+FEATURES["ENABLE_EXTERNAL_ACCESS_CONTROL"] = True
+EXTERNAL_ACCESS_CONTROL_URL = "http://172.22.0.1:10000/access"
+EXTERNAL_ACCESS_CONTROL_PUBLIC_KEY_PATH = "/openedx/edx-platform/lms/djangoapps/access_control/keys/public_key.pem"
+
 ################################### FEATURES ###################################
 
 CC_MERCHANT_NAME = Derived(lambda settings: settings.PLATFORM_NAME)
@@ -1420,6 +1427,7 @@ MIDDLEWARE = [
     # Instead of AuthenticationMiddleware, we use a cached backed version
     #'django.contrib.auth.middleware.AuthenticationMiddleware',
     'openedx.core.djangoapps.cache_toolbox.middleware.CacheBackedAuthenticationMiddleware',
+    'lms.djangoapps.access_control.middleware.ExternalAccessControlMiddleware',
 
     # Middleware to flush user's session in other browsers when their email is changed.
     'openedx.core.djangoapps.safe_sessions.middleware.EmailChangeMiddleware',
@@ -2073,6 +2081,7 @@ INSTALLED_APPS = [
 
     # LMS-specific Initialization
     'lms.djangoapps.lms_initialization.apps.LMSInitializationConfig',
+    'lms.djangoapps.access_control.apps.AccessControlConfig',
 
     # Common views
     'openedx.core.djangoapps.common_views',
