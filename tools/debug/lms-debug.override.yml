@@ -1,0 +1,17 @@
+services:
+  lms:
+    command:
+      - bash
+      - -lc
+      - >
+        cd /openedx/edx-platform &&
+        python -m pip install debugpy >/dev/null 2>&1 &&
+        PYDEVD_DISABLE_FILE_VALIDATION=1
+        python -Xfrozen_modules=off -c
+        "import debugpy, runpy, sys;
+        debugpy.listen(('0.0.0.0', 5678));
+        sys.argv=['manage.py','lms','runserver','0.0.0.0:8000','--noreload','--nothreading'];
+        runpy.run_path('/openedx/edx-platform/manage.py', run_name='__main__')"
+    ports:
+      - "8000:8000"
+      - "5678:5678"
